@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: openlibrary_data
+    tables:
+      - name: openlibrary_books
+        meta: 
+          dagster:
+              asset_key: ["dlt_openlibrary_source_openlibrary_books"]
+      - name: openlibrary_author
+        meta:
+          dagster:
+            asset_key: ["dlt_openlibrary_source_openlibrary_author"]
