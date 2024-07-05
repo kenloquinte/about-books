@@ -35,7 +35,7 @@ As can be seen, most of the analysis supported by the model are based on record 
 
 Apache Superset is used to make visualizations and dashboards. It directly connects to the data warehouse produced from the previous steps.
 
-The project dashboard can be downloaded and imported to a Superset instance (export file here: [dashboard.zip](superset/dashboard.zip)).
+The project dashboard can be downloaded and imported to a Superset instance (export file here: [superset_dashboard.zip](docker/assets/superset_dashboard.zip)).
 
 ## Sample Charts
 

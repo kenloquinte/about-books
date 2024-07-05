@@ -1,0 +1,42 @@
+services:
+  superset:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.superset
+      args:
+        SUPERSET_ADMIN: ${SUPERSET_ADMIN-admin}
+        SUPERSET_PASSWORD: ${SUPERSET_PASSWORD-admin}
+    # Can use this instead when there are multiple environment variables.
+    # In the meantime, just use the .env file at the project root.
+    
+    # env_file:
+    #   - path: ./docker/.env.superset
+    #     required: true
+    
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+    ports:
+        - "8088:8088"
+    container_name: superset
+    
+    # Copied from github.com/cnstlungu/portable-data-stack-dagster, and is based on the Superset gunicorn settings
+    command: gunicorn --bind "0.0.0.0:8088" --access-logfile '-' --error-logfile '-' --workers 1 --worker-class gthread --threads 20 --timeout 60 --limit-request-line 0 --limit-request-field_size 0 "superset.app:create_app()"
+    volumes:
+        - db:/app/superset_home/db
+    restart: unless-stopped
+    depends_on:
+      - dagster
+  
+  dagster:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.dagster
+    restart: always
+    volumes:
+        - db:/opt/dagster/app/db
+    ports:
+        - "3000:3000"
+
+volumes:
+  db:
+    external: false

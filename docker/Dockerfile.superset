@@ -1,0 +1,36 @@
+FROM apache/superset
+
+USER root
+
+# Copy Superset dashboard and config to /app
+COPY --chown=superset:superset docker/assets .
+ENV SUPERSET_CONFIG_PATH=/app/superset_config.py
+
+RUN pip install duckdb
+RUN pip install duckdb-engine
+
+RUN groupadd -g 1300 db_group
+RUN mkdir -p /app/superset_home/db \
+    && chgrp -R db_group /app/superset_home/db
+
+RUN usermod -a -G db_group superset
+
+USER superset
+
+ARG SUPERSET_ADMIN
+ARG SUPERSET_PASSWORD
+
+RUN superset fab create-admin \
+              --username ${SUPERSET_ADMIN} \
+              --firstname Superset \
+              --lastname Admin \
+              --email admin@example.com \
+              --password ${SUPERSET_PASSWORD}
+RUN superset db upgrade
+RUN superset init
+RUN superset import-dashboards -p ./superset_dashboard.zip -u ${SUPERSET_ADMIN}
+
+# Set data warehouse URI
+RUN superset set_database_uri -d duckdb -u duckdb:///superset_home/db/openlibrary.duckdb
+
+

@@ -1,8 +1,11 @@
 from dagster import AssetExecutionContext, SourceAsset
 from dagster_dbt import DbtCliResource, dbt_assets
 from dagster_embedded_elt.dlt import DagsterDltResource, dlt_assets
-from dlt import pipeline
+from dlt import destinations, pipeline 
 from dlt_sources.openlibrary import openlibrary_source
+import duckdb
+
+import os
 
 from .constants import dbt_manifest_path
 
@@ -11,7 +14,7 @@ from .constants import dbt_manifest_path
     dlt_pipeline=pipeline(
         pipeline_name="openlibrary",
         dataset_name="openlibrary_data",
-        destination="duckdb",
+        destination=destinations.duckdb("db/openlibrary.duckdb")
     ),
     name="openlibrary",
     group_name="openlibrary"
@@ -26,4 +29,8 @@ openlibrary_source_assets = [
 
 @dbt_assets(manifest=dbt_manifest_path)
 def openlibrary_dbt_assets(context: AssetExecutionContext, dbt: DbtCliResource):
-    yield from dbt.cli(["build"], context=context).stream()
+    if os.getenv('SETUP_ENVIRONMENT') == 'docker':
+        yield from dbt.cli(["build", "--target=docker"], context=context).stream()
+
+    else:
+        yield from dbt.cli(["build"], context=context).stream()

@@ -1,0 +1,45 @@
+FROM python:3.11-slim
+
+RUN mkdir -p /opt/dagster/dagster_home /opt/dagster/app
+
+RUN pip install -U pip setuptools wheel
+RUN apt-get update && apt-get upgrade -y
+
+# Copy your code and workspace to /opt/dagster/app
+COPY openlibrary-dagster /opt/dagster/app/
+COPY dbt_openlibrary /opt/dagster/app/dbt_openlibrary
+COPY dlt_sources /opt/dagster/app/dlt_sources
+
+WORKDIR /opt/dagster/app
+
+RUN groupadd -g 1300 db_group
+RUN mkdir -p /opt/dagster/app/db \
+    && chgrp -R db_group /opt/dagster/app/db
+
+# Install dagster dependencies
+RUN pip install -e ".[dev]"
+
+# Install dlt dependencies
+RUN pip install -e dlt_sources
+RUN pip install -r dlt_sources/requirements.txt
+
+# Install dbt dependencies
+RUN pip install dbt-duckdb
+
+ENV DAGSTER_HOME=/opt/dagster/dagster_home/
+ENV SETUP_ENVIRONMENT=docker
+
+COPY docker/dagster.yaml /opt/dagster/dagster_home/
+
+WORKDIR /opt/dagster/app/dbt_openlibrary
+RUN dbt deps
+RUN dbt parse
+
+WORKDIR /opt/dagster/app
+
+COPY --chmod=755 docker/*.sh /opt/dagster/app/docker/
+RUN docker/docker-init.sh
+
+EXPOSE 3000
+
+ENTRYPOINT ["dagster-webserver", "-h", "0.0.0.0", "-p", "3000"]

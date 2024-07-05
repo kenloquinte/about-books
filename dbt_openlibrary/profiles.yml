@@ -1,0 +1,18 @@
+dbt_openlibrary:
+  outputs:
+    dev:
+      type: duckdb
+      path: ../openlibrary-dagster/db/openlibrary.duckdb
+      threads: 1
+
+    docker:
+      type: duckdb
+      path: ../db/openlibrary.duckdb
+      threads: 1
+
+    prod:
+      type: duckdb
+      path: prod.duckdb
+      threads: 4
+
+  target: dev
